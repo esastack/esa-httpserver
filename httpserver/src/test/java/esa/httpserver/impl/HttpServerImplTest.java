@@ -15,6 +15,7 @@
  */
 package esa.httpserver.impl;
 
+import esa.commons.ExceptionUtils;
 import esa.commons.NetworkUtils;
 import esa.httpserver.HttpServer;
 import esa.httpserver.ServerOptions;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,7 +33,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 class HttpServerImplTest {
 
     @Test
-    void testStatus() {
+    void testStatus() throws InterruptedException {
         final HttpServer server = HttpServer.create("foo", ServerOptionsConfigure.newOpts()
                 .metricsEnabled(true)
                 .bossThreads(1)
@@ -73,18 +75,21 @@ class HttpServerImplTest {
         assumeTrue(started);
         CompletableFuture<Boolean> awaited1 = null;
         CompletableFuture<Boolean> awaited2 = null;
+        final CountDownLatch awaitStarted = new CountDownLatch(2);
         try {
             awaited1 = CompletableFuture.supplyAsync(() -> {
                 try {
+                    awaitStarted.countDown();
                     server.awaitUninterruptibly();
                 } catch (Exception t) {
-                    return false;
+                    ExceptionUtils.throwException(t);
                 }
                 return true;
             });
 
             awaited2 = CompletableFuture.supplyAsync(() -> {
                 try {
+                    awaitStarted.countDown();
                     server.await();
                 } catch (Exception t) {
                     return false;
@@ -106,6 +111,7 @@ class HttpServerImplTest {
             assertFalse(onClose.get());
             assertFalse(closed.isDone());
         } finally {
+            awaitStarted.await();
             server.close();
             assertTrue(onClose.get());
             assertTrue(closed.join());
