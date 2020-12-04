@@ -58,8 +58,6 @@ class HttpServerImplTest {
         assertDoesNotThrow(() -> server.onConnected(ctx -> onConnected.set(true)));
         assertDoesNotThrow(() -> server.onDisconnected(ctx -> onDisconnected.set(true)));
         assertDoesNotThrow(() -> server.handle(ctx -> onHandle.set(true)));
-        assertThrows(IllegalStateException.class, server::awaitUninterruptibly);
-        assertThrows(IllegalStateException.class, server::await);
 
         server.closeFuture().addListener(f -> closed.complete(true));
 

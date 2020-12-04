@@ -122,8 +122,6 @@ public class HttpServerImpl implements HttpServer {
     public void await() throws InterruptedException {
         if (runtime.isRunning()) {
             closeFuture().await();
-        } else {
-            throw new IllegalStateException("Server haven't started");
         }
     }
 
@@ -131,8 +129,6 @@ public class HttpServerImpl implements HttpServer {
     public void awaitUninterruptibly() {
         if (runtime.isRunning()) {
             closeFuture().awaitUninterruptibly();
-        } else {
-            throw new IllegalStateException("Server haven't started");
         }
     }
 
