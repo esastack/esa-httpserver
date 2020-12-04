@@ -101,7 +101,7 @@ final class Http2Handler extends Http2EventAdapter {
             boolean requiredContentLengthValid = true;
             if (expectValue != null) {
                 if (HttpHeaderValues.CONTINUE.contentEqualsIgnoreCase(expectValue)) {
-                    // has 'expect：100-continue' header'
+                    // has 'expect: 100-continue' header'
                     if (isContentLengthInvalid(headers)) {
                         write413(ctx, stream, streamDependency, weight, exclusive);
                         // ignore content data

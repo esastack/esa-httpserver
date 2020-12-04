@@ -87,7 +87,7 @@ final class Http1Handler extends SimpleChannelInboundHandler<HttpObject> {
                 final String expectValue = start.headers().get(EXPECT);
                 if (expectValue != null) {
                     if (HttpHeaderValues.CONTINUE.toString().equalsIgnoreCase(expectValue)) {
-                        // has 'expect：100-continue' header'
+                        // has 'expect: 100-continue' header'
                         if (isContentLengthInvalid(start)) {
                             write413(ctx, true, TOO_LARGE.retainedDuplicate());
                             // ignore content data
