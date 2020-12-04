@@ -27,9 +27,9 @@ class TransportsTest {
         assertTrue(Transports.transport(false) instanceof NioTransport);
 
         if (Epoll.isAvailable()) {
-            assertTrue(Transports.transport(false) instanceof EpollTransport);
+            assertTrue(Transports.transport(true) instanceof EpollTransport);
         } else {
-            assertTrue(Transports.transport(false) instanceof NioTransport);
+            assertTrue(Transports.transport(true) instanceof NioTransport);
         }
     }
 
