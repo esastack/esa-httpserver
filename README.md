@@ -2,7 +2,8 @@
 
 ![Build](https://github.com/esastack/esa-httpserver/workflows/Build/badge.svg?branch=main)
 [![codecov](https://codecov.io/gh/esastack/esa-httpserver/branch/main/graph/badge.svg?token=C6JT3SKXX5)](https://codecov.io/gh/esastack/esa-httpserver)
-[![GitHub license](https://img.shields.io/github/license/esastack/esa-httpserver)](https://github.com/esastack/esa-commons/blob/main/LICENSE)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.esastack/httpserver/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.esastack/httpserver/)
+[![GitHub license](https://img.shields.io/github/license/esastack/esa-httpserver)](https://github.com/esastack/esa-httpserver/blob/main/LICENSE)
 
 ESA HttpServer is an asynchronous event-driven http server based on netty.
 
