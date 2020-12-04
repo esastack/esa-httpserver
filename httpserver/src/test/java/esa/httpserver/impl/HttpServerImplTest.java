@@ -157,6 +157,7 @@ class HttpServerImplTest {
         final ServerOptions options = ServerOptionsConfigure.newOpts()
                 .bossThreads(1)
                 .ioThreads(1)
+                .reusePort(false)
                 .configured();
         final HttpServer server = HttpServer.create(options)
                 .handle(r -> r.response().end());
