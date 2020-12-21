@@ -61,11 +61,10 @@ We used the following software for the testing:
 
 - wrk4.1.0
 
-- |        | OS                       | CPU  | Mem  |
-  | ------ | ------------------------ | ---- | ---- |
-  | server | centos:6.9-1.2.5(docker) | 4    | 8    |
-  | client | centos:7.6-1.3.0(docker) | 16   | 3    |
-
+- |        | OS                       | CPU  | Mem(G) |
+  | ------ | ------------------------ | ---- | ------ |
+  | server | centos:6.9-1.2.5(docker) | 4    | 8      |
+  | client | centos:7.6-1.3.0(docker) | 16   | 3      |
   
 
 ### JVM Options
