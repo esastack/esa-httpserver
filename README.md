@@ -53,7 +53,7 @@ HttpServer.create()
 ### Test cases
 
 - We built a echo server by ESA HttpServer and used a http client to do the requests for RPS testing with different payload(16B, 128B, 512B, 1KB, 4KB, 10KB)
-- Also we used  netty to build a same echo server which is same with above for RPS testing (use the `HttpServerCodec`, `HttpObjectAggregator` handlers directly).
+- Also we used origin netty to build a same echo server which is same with above for RPS testing (use the `HttpServerCodec`, `HttpObjectAggregator` handlers directly).
 
 ### Hardware Used
 
@@ -81,7 +81,7 @@ We used the following software for the testing:
 
 |                | 16B       | 128B      | 512B      | 1KB       | 4KB      | 10KB     |
 | -------------- | --------- | --------- | --------- | --------- | -------- | -------- |
-| Netty Origin   | 133272.34 | 132818.53 | 132390.78 | 127366.28 | 85408.7  | 49798.84 |
+| Origin Netty   | 133272.34 | 132818.53 | 132390.78 | 127366.28 | 85408.7  | 49798.84 |
 | ESA HttpServer | 142063.99 | 139608.23 | 139646.04 | 140159.5  | 92767.53 | 53534.21 |
 
 
