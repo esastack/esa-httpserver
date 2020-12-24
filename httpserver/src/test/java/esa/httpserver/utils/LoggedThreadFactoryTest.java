@@ -18,7 +18,6 @@ package esa.httpserver.utils;
 import esa.commons.concurrent.InternalThread;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -29,26 +28,14 @@ class LoggedThreadFactoryTest {
         LoggedThreadFactory factory = new LoggedThreadFactory("foo", true);
         Thread thread = factory.newThread(() -> {
         });
-        assertEquals("foo-0#0", thread.getName());
-        assertTrue(thread.isDaemon());
-        assertTrue(thread instanceof InternalThread);
-
-        thread = factory.newThread(() -> {
-        });
-        assertEquals("foo-0#1", thread.getName());
+        assertTrue(thread.getName().startsWith("foo"));
         assertTrue(thread.isDaemon());
         assertTrue(thread instanceof InternalThread);
 
         factory = new LoggedThreadFactory("bar");
         thread = factory.newThread(() -> {
         });
-        assertEquals("bar-1#0", thread.getName());
-        assertFalse(thread.isDaemon());
-        assertTrue(thread instanceof InternalThread);
-
-        thread = factory.newThread(() -> {
-        });
-        assertEquals("bar-1#1", thread.getName());
+        assertTrue(thread.getName().startsWith("bar"));
         assertFalse(thread.isDaemon());
         assertTrue(thread instanceof InternalThread);
     }
