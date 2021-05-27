@@ -26,7 +26,7 @@ ESA HttpServer is an asynchronous event-driven http server based on netty.
 <dependency>
     <groupId>io.esastack</groupId>
     <artifactId>httpserver</artifactId>
-    <version>${esa-httpserver.version}</version>
+    <version>${mvn.version}</version>
 </dependency>
 ```
 
