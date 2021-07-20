@@ -230,6 +230,14 @@ abstract class BaseRequestHandle implements RequestHandle {
     public abstract BaseResponse<? extends BaseRequestHandle> response();
 
     void handleContent(ByteBuf buf) {
+        // ignore unreadable data
+        // 1. it is no need to pass empty content to multipart decoder and aggregator
+        // 2.keep the onData() behavior of Http1 and Htt2 consistent, because empty content in
+        //   LastHttpContent#EMPTY_LAST_CONTENT will be ignored in Http1Handler but will be passed in Http2Handler
+        if (!buf.isReadable()) {
+            return;
+        }
+
         if (multipart != null) {
             multipart.onData(buf.duplicate());
         }

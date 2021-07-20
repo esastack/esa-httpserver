@@ -184,7 +184,7 @@ final class Http2Handler extends Http2EventAdapter {
         final int readableBytes = data.readableBytes();
 
         // The req.bytes is logically divided to positive one, negative one and zero
-        // 1. The positive one presenting the chunk size left, which mean we can only read num of req.bytes data
+        // 1. The positive one presenting the chunk size left, which means we can only read num of req.bytes data
         //    limited by content length, and the oversize bytes will be discarded.
         // 2. The negative one presenting the num of bytes that we have read, which would be limited by the
         //    ServerOptions#maxContentLength,  and the exceeded bytes will be discarded.
