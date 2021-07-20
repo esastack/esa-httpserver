@@ -115,9 +115,11 @@ class BaseRequestHandleTest {
         final Req req = plainReq();
         final List<ByteBuf> bufs = new LinkedList<>();
         assertSame(req, req.onData(bufs::add));
+        final ByteBuf buf0 = Unpooled.copiedBuffer(new byte[0]);
         final ByteBuf buf1 = Unpooled.copiedBuffer(new byte[]{1, 2});
         final ByteBuf buf2 = Unpooled.copiedBuffer(new byte[]{3, 4});
         final ByteBuf buf3 = Unpooled.copiedBuffer(new byte[]{5, 6});
+        req.handleContent(buf0);
         req.handleContent(buf1);
         req.handleContent(buf2);
         req.handleContent(buf3);
@@ -125,6 +127,7 @@ class BaseRequestHandleTest {
         assertSame(buf1, bufs.get(0));
         assertSame(buf2, bufs.get(1));
         assertSame(buf3, bufs.get(2));
+        assertEquals(1, buf0.refCnt());
         assertEquals(1, buf1.refCnt());
         assertEquals(1, buf2.refCnt());
         assertEquals(1, buf3.refCnt());
@@ -241,6 +244,8 @@ class BaseRequestHandleTest {
         assertTrue(req.multipart().attributes().isEmpty());
         assertTrue(req.multipart().uploadFiles().isEmpty());
 
+        final String body0 = "";
+
         final String body1 =
                 "--" + boundary + "\r\n" +
                         "Content-Disposition: form-data; name=\"file\"; filename=\"tmp-0.txt\"\r\n" +
@@ -254,8 +259,13 @@ class BaseRequestHandleTest {
                 "bar\r\n" +
                 "--" + boundary + "--\r\n";
 
-        req.handleContent(Unpooled.copiedBuffer(body1, StandardCharsets.UTF_8));
-        req.handleContent(Unpooled.copiedBuffer(body2, StandardCharsets.UTF_8));
+        final ByteBuf buf0 = Unpooled.copiedBuffer(body0, StandardCharsets.UTF_8);
+        final ByteBuf buf1 = Unpooled.copiedBuffer(body1, StandardCharsets.UTF_8);
+        final ByteBuf buf2 = Unpooled.copiedBuffer(body2, StandardCharsets.UTF_8);
+
+        req.handleContent(buf0);
+        req.handleContent(buf1);
+        req.handleContent(buf2);
 
         final CompletableFuture<Void> cf = new CompletableFuture<>();
         req.onEnd(p -> {
@@ -275,6 +285,9 @@ class BaseRequestHandleTest {
 
         cf.complete(null);
         assertNull(upload.getByteBuf());
+        assertEquals(1, buf0.refCnt());
+        assertEquals(1, buf1.refCnt());
+        assertEquals(1, buf2.refCnt());
     }
 
     @Test
@@ -289,6 +302,7 @@ class BaseRequestHandleTest {
         assertSame(req, req.multipart(true));
         assertNotSame(MultipartHandle.EMPTY, req.multipart());
 
+        final String body0 = "";
         final String body1 =
                 "--" + boundary + "\r\n" +
                         "Content-Disposition: form-data; name=\"file\"; filename=\"tmp-0.txt\"\r\n" +
@@ -296,10 +310,18 @@ class BaseRequestHandleTest {
                         "\r\n" +
                         "foo" + "\r\n" +
                         "--" + boundary;
-        req.handleContent(Unpooled.copiedBuffer(body1, StandardCharsets.UTF_8));
+        final ByteBuf buf0 = Unpooled.copiedBuffer(body0, StandardCharsets.UTF_8);
+        final ByteBuf buf1 = Unpooled.copiedBuffer(body1, StandardCharsets.UTF_8);
+        req.handleContent(buf0);
+        req.handleContent(buf1);
+
+        assertEquals(1, buf0.refCnt());
+        assertEquals(1, buf1.refCnt());
 
         req.multipart(false);
         assertSame(MultipartHandle.EMPTY, req.multipart());
+        assertEquals(1, buf0.refCnt());
+        assertEquals(1, buf1.refCnt());
     }
 
     @Test
@@ -333,21 +355,28 @@ class BaseRequestHandleTest {
             return p;
         });
 
+        final ByteBuf buf0 = Unpooled.copiedBuffer("".getBytes(StandardCharsets.UTF_8));
         final ByteBuf buf1 = Unpooled.copiedBuffer("123".getBytes(StandardCharsets.UTF_8));
         final ByteBuf buf2 = Unpooled.copiedBuffer("456".getBytes(StandardCharsets.UTF_8));
+        req.handleContent(buf0);
         req.handleContent(buf1);
         req.handleContent(buf2);
+
         final HttpHeaders trailers = new Http1HeadersImpl();
         req.handleTrailer(trailers);
         req.handleEnd();
 
         assertEquals("123456", req.aggregated().body().toString(StandardCharsets.UTF_8));
         assertEquals(1, req.aggregated().body().refCnt());
+
+        // empty content will be ignored
+        assertEquals(1, buf0.refCnt());
         // retained
         assertEquals(2, buf1.refCnt());
         assertEquals(2, buf2.refCnt());
         assertSame(trailers, req.aggregated().trailers());
         end.complete(null);
+        assertEquals(1, buf0.refCnt());
         assertEquals(1, buf1.refCnt());
         assertEquals(1, buf2.refCnt());
         assertSame(AggregationHandle.EMPTY, req.aggregated());

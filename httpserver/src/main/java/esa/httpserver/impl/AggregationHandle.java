@@ -58,12 +58,10 @@ final class AggregationHandle implements Aggregation {
     }
 
     void appendPartialContent(ByteBuf partialContent) {
-        if (partialContent.isReadable()) {
-            if (content == null) {
-                content = ctx.alloc().compositeBuffer(MAX_COMPOSITE_BUFFER_COMPONENTS);
-            }
-            content.addComponent(true, partialContent);
+        if (content == null) {
+            content = ctx.alloc().compositeBuffer(MAX_COMPOSITE_BUFFER_COMPONENTS);
         }
+        content.addComponent(true, partialContent);
     }
 
     void release() {
