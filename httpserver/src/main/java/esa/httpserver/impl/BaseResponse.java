@@ -49,11 +49,23 @@ abstract class BaseResponse<REQ extends BaseRequestHandle> implements Response {
     final ChannelPromise onEndPromise;
     final ChannelPromise endPromise;
     int status = 200;
-    private volatile Thread committed;
-    private volatile boolean ended;
+    /**
+     * Indicates the committing status of current response.
+     *
+     * <ul>
+     *     <li>{@code null}: INIT, response hasn't been committed or ended yet.</li>
+     *     <li>An instance {@link Thread}: committing, response is being written by this thread and response has been
+     *     committed but hasn't been ended.</li>
+     *     <li>{@link #IDLE}: IDLE, response has been committed but hasn't been ended. and can be written now.</li>
+     *     <li>{@link #IDLE}: END, response has been ended. and can not be written.</li>
+     * </ul>
+     */
+    private volatile Object committed;
 
-    private static final AtomicReferenceFieldUpdater<BaseResponse, Thread> COMMITTED_UPDATER =
-            AtomicReferenceFieldUpdater.newUpdater(BaseResponse.class, Thread.class, "committed");
+    private static final AtomicReferenceFieldUpdater<BaseResponse, Object> COMMITTED_UPDATER =
+            AtomicReferenceFieldUpdater.newUpdater(BaseResponse.class, Object.class, "committed");
+    private static final Object END = new Object();
+    private static final Object IDLE = new Object();
 
     BaseResponse(REQ req) {
         this.request = req;
@@ -68,9 +80,6 @@ abstract class BaseResponse<REQ extends BaseRequestHandle> implements Response {
 
     @Override
     public Response setStatus(int code) {
-        if (isCommitted()) {
-            return this;
-        }
         this.status = code;
         return this;
     }
@@ -119,11 +128,15 @@ abstract class BaseResponse<REQ extends BaseRequestHandle> implements Response {
     }
 
     private Future<Void> write0(byte[] data, int offset, int length) {
-        final boolean casWon = ensureCommittedExclusively();
-        if (!casWon && isEnded()) {
-            throw new IllegalStateException("Already ended");
+        boolean writeHead = ensureCommitExclusively();
+        try {
+            return doWrite(data, offset, length, writeHead);
+        } finally {
+            // set to IDlE state to indicates that the current write has been over and the next write is allowed.
+            // we can use lazySet() because the IDLE value set here can be observed by other thread if the call of
+            // write is kept in order which needs some means to ensure the memory visibility.
+            COMMITTED_UPDATER.lazySet(this, IDLE);
         }
-        return doWrite(data, offset, length, casWon);
     }
 
     @Override
@@ -131,11 +144,15 @@ abstract class BaseResponse<REQ extends BaseRequestHandle> implements Response {
         if (data == null) {
             data = Unpooled.EMPTY_BUFFER;
         }
-        final boolean casWon = ensureCommittedExclusively();
-        if (!casWon && isEnded()) {
-            throw new IllegalStateException("Already ended");
+        boolean writeHead = ensureCommitExclusively();
+        try {
+            return doWrite(data, writeHead);
+        } finally {
+            // set to IDlE to indicates that the current write has been over and the next write is allowed.
+            // we can use lazySet() because the IDLE value set here can be observed by other thread if the call of
+            // write is kept in order which needs some means to ensure the memory visibility.
+            COMMITTED_UPDATER.lazySet(this, IDLE);
         }
-        return doWrite(data, casWon);
     }
 
     @Override
@@ -166,9 +183,9 @@ abstract class BaseResponse<REQ extends BaseRequestHandle> implements Response {
     }
 
     private Future<Void> end0(byte[] data, int offset, int length) {
-        final boolean casWon = ensureEndedExclusively();
+        final boolean writeHead = ensureEndExclusively(true);
         try {
-            doEnd(data, offset, length, casWon);
+            doEnd(data, offset, length, writeHead);
         } finally {
             if (!isKeepAlive()) {
                 endPromise.addListener(closure());
@@ -183,9 +200,9 @@ abstract class BaseResponse<REQ extends BaseRequestHandle> implements Response {
         if (data == null) {
             data = Unpooled.EMPTY_BUFFER;
         }
-        final boolean casWon = ensureEndedExclusively();
+        final boolean writeHead = ensureEndExclusively(true);
         try {
-            doEnd(data, casWon, false);
+            doEnd(data, writeHead, false);
         } finally {
             if (!isKeepAlive()) {
                 endPromise.addListener(closure());
@@ -205,9 +222,8 @@ abstract class BaseResponse<REQ extends BaseRequestHandle> implements Response {
             ExceptionUtils.throwException(new FileNotFoundException(file.getName()));
         }
 
-        if (!ensureEndedExclusively()) {
-            throw new IllegalStateException("Already committed");
-        }
+        ensureEndExclusively(false);
+
         if (!headers().contains(CONTENT_TYPE)) {
             String contentType = MimeMappings.getMimeTypeOrDefault(file.getPath());
             headers().set(CONTENT_TYPE, contentType);
@@ -232,12 +248,12 @@ abstract class BaseResponse<REQ extends BaseRequestHandle> implements Response {
 
     @Override
     public boolean isCommitted() {
-        return committed != null;
+        return COMMITTED_UPDATER.get(this) != null;
     }
 
     @Override
     public boolean isEnded() {
-        return ended;
+        return COMMITTED_UPDATER.get(this) == END;
     }
 
     @Override
@@ -257,35 +273,70 @@ abstract class BaseResponse<REQ extends BaseRequestHandle> implements Response {
 
     @Override
     public String toString() {
+        Object committed = COMMITTED_UPDATER.get(this);
+        String committedStatus;
+        if (committed == null) {
+            committedStatus = "-";
+        } else if (committed == END) {
+            committedStatus = "!";
+        } else {
+            committedStatus = "~";
+        }
         return StringUtils.concat("Response",
-                isCommitted() ? "![" : "-[",
+                committedStatus, "[",
                 request.rawMethod(),
                 " ", request.path(),
                 " ", Integer.toString(status),
                 "]");
     }
 
-    boolean ensureEndedExclusively() {
-        boolean committed = ensureCommittedExclusively();
-        if (ended) {
+    boolean ensureCommitExclusively() {
+        final Object current = COMMITTED_UPDATER.get(this);
+        if (current == null) {
+            // INIT
+            final Thread t = Thread.currentThread();
+            if (COMMITTED_UPDATER.compareAndSet(this, null, t)) {
+                return true;
+            }
+            throw new IllegalStateException("Concurrent committing['INIT' -> '" + t.getName() + "']");
+        } else if (current == END) {
+            // END
             throw new IllegalStateException("Already ended");
+        } else if (current == IDLE) {
+            // IDLE
+            final Thread t = Thread.currentThread();
+            if (COMMITTED_UPDATER.compareAndSet(this, IDLE, t)) {
+                return false;
+            }
+            throw new IllegalStateException("Concurrent committing['IDLE' -> '" + t.getName() + "']");
+        } else {
+            // current response is being committing by another thread
+            throw new IllegalStateException("Concurrent committing ['" + ((Thread) current).getName() +
+                    "' -> '" + Thread.currentThread().getName() + "']");
         }
-        ended = true;
-        return committed;
     }
 
-    boolean ensureCommittedExclusively() {
-        final Thread current = Thread.currentThread();
-        if (COMMITTED_UPDATER.compareAndSet(this, null, current)) {
-            return true;
+    boolean ensureEndExclusively(boolean allowCommitted) {
+        final Object current = COMMITTED_UPDATER.get(this);
+        if (current == null) {
+            // INIT
+            if (COMMITTED_UPDATER.compareAndSet(this, null, END)) {
+                return true;
+            }
+            throw new IllegalStateException("Concurrent ending['INIT' -> 'END']");
+        } else if (current == IDLE) {
+            // IDLE
+            if (allowCommitted && COMMITTED_UPDATER.compareAndSet(this, IDLE, END)) {
+                return false;
+            }
+            throw new IllegalStateException("Concurrent ending['IDLE' -> 'END']");
+        } else if (current == END) {
+            // END
+            throw new IllegalStateException("Already ended");
+        } else {
+            // current response is being committing by another thread
+            throw new IllegalStateException("Concurrent ending['" + ((Thread) current).getName() + "' -> 'END']");
         }
-
-        if (current == committed) {
-            return false;
-        }
-
-        throw new IllegalStateException("Should be committed by same thread. expected '"
-                + committed.getName() + "' but '" + current.getName() + "'");
     }
 
     ChannelHandlerContext ctx() {
@@ -321,14 +372,8 @@ abstract class BaseResponse<REQ extends BaseRequestHandle> implements Response {
     }
 
     private boolean tryEnd() {
-        if (committed == null) {
-            final Thread current = Thread.currentThread();
-            if (COMMITTED_UPDATER.compareAndSet(this, null, current)) {
-                ended = true;
-                return true;
-            }
-        }
-        return false;
+        final Object current = COMMITTED_UPDATER.get(this);
+        return current == null && COMMITTED_UPDATER.compareAndSet(this, null, END);
     }
 
     abstract Future<Void> doWrite(ByteBuf data, boolean writeHead);

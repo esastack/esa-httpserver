@@ -338,7 +338,7 @@ abstract class BaseRequestHandle implements RequestHandle {
     @Override
     public String toString() {
         return StringUtils.concat("Request",
-                response().isCommitted() ? "![" : "-[",
+                isEnded() ? "![" : "-[",
                 version().name(),
                 " ", rawMethod(),
                 " ", path(),

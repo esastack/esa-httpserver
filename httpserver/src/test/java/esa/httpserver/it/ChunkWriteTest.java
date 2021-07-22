@@ -19,6 +19,7 @@ import esa.commons.NetworkUtils;
 import esa.commons.io.IOUtils;
 import esa.httpserver.HttpServer;
 import esa.httpserver.ServerOptionsConfigure;
+import esa.httpserver.core.Response;
 import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.logging.LogLevel;
@@ -53,11 +54,21 @@ class ChunkWriteTest {
                                 ended.complete(true);
                                 return p.setSuccess(null);
                             });
-                    req.response().headers().set("a", 1);
-                    req.response().write("12".getBytes());
-                    req.response().write("34".getBytes());
-                    req.response().write("56".getBytes());
-                    req.response().end("78".getBytes());
+                    final Response res = req.response();
+                    res.headers().set("a", 1);
+                    res.write("1".getBytes());
+                    res.write(Unpooled.copiedBuffer("2".getBytes()));
+                    res.write("3".getBytes()).addListener(f -> {
+                        res.write("4".getBytes()).addListener(f1 -> {
+                            new Thread(() -> {
+                                res.write(Unpooled.copiedBuffer("5".getBytes())).addListener(f2 -> {
+                                    new Thread(() -> {
+                                        res.end(Unpooled.copiedBuffer("6".getBytes()));
+                                    }).start();
+                                });
+                            }).start();
+                        });
+                    });
                 });
 
         server.listen(port);
@@ -70,7 +81,7 @@ class ChunkWriteTest {
             httpURLConnection.setDoOutput(true);
             httpURLConnection.getOutputStream().write("foo".getBytes());
             assertEquals(200, httpURLConnection.getResponseCode());
-            assertEquals("12345678", IOUtils.toString(httpURLConnection.getInputStream()));
+            assertEquals("123456", IOUtils.toString(httpURLConnection.getInputStream()));
             assertEquals("1", httpURLConnection.getHeaderField("a"));
             assertTrue(ended.get(3L, TimeUnit.SECONDS));
             assertEquals("foo", buf.toString(StandardCharsets.US_ASCII));
