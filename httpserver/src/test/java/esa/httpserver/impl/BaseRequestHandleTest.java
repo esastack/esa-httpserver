@@ -415,6 +415,15 @@ class BaseRequestHandleTest {
         assertSame(AggregationHandle.EMPTY, req.aggregated());
     }
 
+    @Test
+    void testToString() {
+        final Req req = plainReq();
+        assertEquals("Request-[HTTP_1_1 GET /foo]", req.toString());
+
+        req.isEnded = true;
+        assertEquals("Request![HTTP_1_1 GET /foo]", req.toString());
+    }
+
     static Req plainReq() {
         return new Req(new EmbeddedChannel(new ChannelInboundHandlerAdapter()).pipeline().firstContext(), "/foo");
     }

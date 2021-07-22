@@ -77,7 +77,7 @@ class Http2ResponseImplTest {
         final ResTuple r = newResponse();
         final Http2ResponseImpl res = r.res;
         final AtomicBoolean committed = new AtomicBoolean();
-        final Thread t = new Thread(() -> committed.set(res.ensureCommittedExclusively()), "base-response-test");
+        final Thread t = new Thread(() -> committed.set(res.ensureCommitExclusively()), "base-response-test");
         t.start();
         t.join();
         assertTrue(committed.get());
@@ -88,7 +88,7 @@ class Http2ResponseImplTest {
     void testChunkWriteIfResponseHasBeenEnded() {
         final ResTuple r = newResponse();
         final Http2ResponseImpl res = r.res;
-        assertTrue(res.ensureEndedExclusively());
+        assertTrue(res.ensureEndExclusively(true));
         assertThrows(IllegalStateException.class, () -> res.write(Unpooled.copiedBuffer("foo".getBytes())));
     }
 

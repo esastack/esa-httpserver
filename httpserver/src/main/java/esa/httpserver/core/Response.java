@@ -31,14 +31,32 @@ import java.io.File;
 /**
  * An interface defines a http server response.
  * <p>
- * !Note: It would be uncompleted state which means current {@link Response} haven't been completely written(eg. only
- * part of the body is written, and waiting to write the left.) and it could be indicated by the return value of {@link
- * #isCommitted()} {@link #isEnded()}.
+ * !Note: It would be uncompleted state which means current {@link Response} hasn't been completely written(eg. only
+ * part of the body was written, and waiting to write the left. and it could be indicated by the return values of {@link
+ * #isCommitted()} and {@link #isEnded()}.
  * <p>
- * Also, you should know that this response is not designed thread-safe, but it does a special committing control that
- * only one thread is allowed to commit this response, which means you can not commit this response by calling {@link
- * #write} or {@link #end} method if another thread had committed this response(such as calling the {@link #write}
- * method).
+ * Also, you should know that this response is not designed as thread-safe, but it does a special committing control:
+ * <p>
+ * <strong>Every call of writes should be kept in order.</strong>
+ * </p>
+ * which means it is not allowed to call {@link #write(byte[])} or {@link #end(byte[])} concurrently.
+ * Simply put, you must keep your writes in order, whatever these writes are in one thread or different threads.
+ * <p>
+ * Typically, write response in one thread
+ * <pre>{@code
+ * response.write("foo".getBytes());
+ * response.write("bar".getBytes());
+ * res.end("baz".getBytes());
+ * }</pre>
+ * <p>
+ * Write response asynchronously
+ * <pre>{@code
+ * response.write("foo".getBytes()).addListener(f -> {
+ *     response.write("bar".getBytes()).addListener(f1 -> {
+ *         response.end("baz".getBytes());
+ *     });
+ * });
+ * }</pre>
  */
 public interface Response {
 
@@ -53,7 +71,6 @@ public interface Response {
      * Set the response code
      *
      * @param code code
-     *
      * @return this
      */
     Response setStatus(int code);
@@ -76,7 +93,6 @@ public interface Response {
      * Adds the specified cookie to the response. This method can be called multiple times to set more than one cookie.
      *
      * @param cookie the Cookie to return to the client
-     *
      * @return this
      */
     Response addCookie(Cookie cookie);
@@ -86,7 +102,6 @@ public interface Response {
      *
      * @param name  cookie name
      * @param value value
-     *
      * @return this
      */
     Response addCookie(String name, String value);
@@ -121,7 +136,6 @@ public interface Response {
      * @param data   data to write
      * @param offset offset
      * @param length length
-     *
      * @return future
      */
     Future<Void> write(byte[] data, int offset, int length);
@@ -135,8 +149,7 @@ public interface Response {
      * {@link ByteBuf} allocation/deallocation
      *
      * @param data data to write
-     *
-     * @return future
+     *             3     * @return future
      */
     Future<Void> write(ByteBuf data);
 
@@ -163,7 +176,6 @@ public interface Response {
      * @param data   data to write
      * @param offset offset
      * @param length length
-     *
      * @return future
      */
     Future<Void> end(byte[] data, int offset, int length);
@@ -188,7 +200,6 @@ public interface Response {
      * {@link ByteBuf} allocation/deallocation
      *
      * @param data data to write
-     *
      * @return future
      */
     Future<Void> end(ByteBuf data);
@@ -200,7 +211,6 @@ public interface Response {
      * URI. otherwise it will be regarded as a relative path to root path.
      *
      * @param newUri target uri
-     *
      * @return future
      */
     default Future<Void> sendRedirect(String newUri) {

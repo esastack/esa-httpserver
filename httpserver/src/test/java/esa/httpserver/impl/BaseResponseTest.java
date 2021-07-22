@@ -30,11 +30,20 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.SET_COOKIE;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BaseResponseTest {
 
@@ -152,63 +161,116 @@ class BaseResponseTest {
     }
 
     @Test
+    void testOrderedWrite() {
+        final Res res = new Res();
+        assertTrue(res.write(new byte[2]).isSuccess());
+        assertTrue(res.write(new byte[2]).isSuccess());
+        assertTrue(res.write(new byte[2]).isSuccess());
+        assertTrue(res.end(new byte[2]).isSuccess());
+        verifyEndStatus(res, true);
+
+        final Res res1 = new Res();
+        assertTrue(res1.write(Unpooled.copiedBuffer("abc".getBytes())).isSuccess());
+        assertTrue(res1.write(Unpooled.copiedBuffer("abc".getBytes())).isSuccess());
+        assertTrue(res1.write(Unpooled.copiedBuffer("abc".getBytes())).isSuccess());
+        assertTrue(res1.end(Unpooled.copiedBuffer("abc".getBytes())).isSuccess());
+        verifyEndStatus(res1, true);
+
+
+        final Res res2 = new Res();
+        assertTrue(res2.write(new byte[2]).isSuccess());
+        assertTrue(res2.write(Unpooled.copiedBuffer("abc".getBytes())).isSuccess());
+        assertTrue(res2.write(new byte[2]).isSuccess());
+        assertTrue(res2.end(Unpooled.copiedBuffer("abc".getBytes())).isSuccess());
+        verifyEndStatus(res2, true);
+
+        final Res res3 = new Res();
+        assertTrue(res3.write(new byte[2]).isSuccess());
+        assertTrue(res3.write(Unpooled.copiedBuffer("abc".getBytes())).isSuccess());
+        assertTrue(res3.write(new byte[2]).isSuccess());
+        assertTrue(res3.end(new byte[2]).isSuccess());
+        verifyEndStatus(res3, true);
+    }
+
+    @Test
     void testAlreadyEndedBeforeWriting() {
         final Res res = new Res();
-        assertTrue(res.ensureEndedExclusively());
-        assertTrue(res.isEnded());
+        assertTrue(res.end(new byte[2]).isSuccess());
         assertThrows(IllegalStateException.class, () -> res.write(new byte[2]));
+        verifyEndStatus(res, true);
+
+        final Res res1 = new Res();
+        assertTrue(res1.end(Unpooled.copiedBuffer("abc".getBytes())).isSuccess());
+        assertThrows(IllegalStateException.class, () -> res1.write(Unpooled.copiedBuffer("abc".getBytes())));
+        verifyEndStatus(res1, true);
+
+        final Res res2 = new Res();
+        assertTrue(res2.end(new byte[2]).isSuccess());
+        assertThrows(IllegalStateException.class, () -> res2.write(Unpooled.copiedBuffer("abc".getBytes())));
+        verifyEndStatus(res2, true);
+
+        final Res res3 = new Res();
+        assertTrue(res3.end(Unpooled.copiedBuffer("abc".getBytes())).isSuccess());
+        assertThrows(IllegalStateException.class, () -> res3.write(new byte[2]));
+        verifyEndStatus(res3, true);
     }
 
     @Test
-    void testEnsureCommittedExclusively() throws InterruptedException {
+    void testAlreadyEndedBeforeEnding() {
         final Res res = new Res();
-        final AtomicBoolean committed = new AtomicBoolean();
+        assertTrue(res.end(new byte[2]).isSuccess());
+        assertThrows(IllegalStateException.class, () -> res.end(new byte[2]));
+        verifyEndStatus(res, true);
+
+        final Res res1 = new Res();
+        assertTrue(res1.end(Unpooled.copiedBuffer("abc".getBytes())).isSuccess());
+        assertThrows(IllegalStateException.class, () -> res1.end(Unpooled.copiedBuffer("abc".getBytes())));
+        verifyEndStatus(res1, true);
+
+        final Res res2 = new Res();
+        assertTrue(res2.end(new byte[2]).isSuccess());
+        assertThrows(IllegalStateException.class, () -> res2.end(Unpooled.copiedBuffer("abc".getBytes())));
+        verifyEndStatus(res2, true);
+
+        final Res res3 = new Res();
+        assertTrue(res3.end(Unpooled.copiedBuffer("abc".getBytes())).isSuccess());
+        assertThrows(IllegalStateException.class, () -> res3.end(new byte[2]));
+    }
+
+    @Test
+    void testConcurrentWriting() throws InterruptedException {
+        final DelayedRes res = new DelayedRes();
+
+        res.block();
         final Thread t = new Thread(() -> {
-            committed.set(res.ensureCommittedExclusively());
+            res.write(new byte[2]);
         }, "base-response-test");
         t.start();
+
+        // wait for writing
+        while (res.writePromise.isEmpty()) {
+        }
+
+        assertTrue(res.isCommitted());
+        assertFalse(res.isEnded());
+
+        res.unblock();
+        assertThrows(IllegalStateException.class, () -> res.write(new byte[2]));
+        assertThrows(IllegalStateException.class, () -> res.write(Unpooled.copiedBuffer("abc".getBytes())));
+        assertThrows(IllegalStateException.class, () -> res.end(new byte[2]));
+        assertThrows(IllegalStateException.class, () -> res.end(Unpooled.copiedBuffer("abc".getBytes())));
+
+        res.writePromise.get(0).complete(null);
         t.join();
-        assertTrue(committed.get());
-        assertThrows(IllegalStateException.class, res::ensureCommittedExclusively);
-    }
 
-    @Test
-    void testEnsureEndedExclusively() {
-        final Res res = new Res();
-        assertTrue(res.ensureEndedExclusively());
-        assertThrows(IllegalStateException.class, res::ensureEndedExclusively);
-    }
+        assertTrue(res.isCommitted());
+        assertFalse(res.isEnded());
 
-    @Test
-    void testEnsureEndedExclusivelyIfAlreadyCommittedByCurrentThread() {
-        final Res res = new Res();
-        assertTrue(res.ensureCommittedExclusively());
-        assertFalse(res.ensureEndedExclusively());
-        assertThrows(IllegalStateException.class, res::ensureEndedExclusively);
-    }
+        assertDoesNotThrow(() -> res.write(new byte[2]));
+        assertDoesNotThrow(() -> res.write(Unpooled.copiedBuffer("abc".getBytes())));
+        assertDoesNotThrow(() -> res.end(new byte[2]));
 
-    @Test
-    void testEnsureEndedExclusivelyIfAlreadyCommittedByAnotherThread() throws InterruptedException {
-        final Res res = new Res();
-
-        final AtomicBoolean committed = new AtomicBoolean();
-        final Thread t = new Thread(() -> committed.set(res.ensureCommittedExclusively()), "base-response-test");
-        t.start();
-        t.join();
-        assertTrue(committed.get());
-        assertThrows(IllegalStateException.class, res::ensureEndedExclusively);
-    }
-
-    @Test
-    void testEnsureEndedExclusivelyIfAlreadyEndedByAnotherThread() throws InterruptedException {
-        final Res res = new Res();
-
-        final AtomicBoolean ended = new AtomicBoolean();
-        final Thread t = new Thread(() -> ended.set(res.ensureEndedExclusively()), "base-response-test");
-        t.start();
-        t.join();
-        assertTrue(ended.get());
-        assertThrows(IllegalStateException.class, res::ensureEndedExclusively);
+        verifyEndStatus(res, true);
     }
 
     @Test
@@ -260,7 +322,7 @@ class BaseResponseTest {
         });
 
         // already committed
-        assertTrue(res.ensureCommittedExclusively());
+        assertTrue(res.ensureCommitExclusively());
 
         assertFalse(res.tryEndWithCrash(new IllegalStateException("foo")));
         assertTrue(res.isCommitted());
@@ -300,7 +362,7 @@ class BaseResponseTest {
             }
         });
 
-        assertTrue(res.ensureCommittedExclusively());
+        assertTrue(res.ensureCommitExclusively());
         final int code = res.status();
         assertFalse(res.tryEnd(HttpResponseStatus.INTERNAL_SERVER_ERROR, () -> Unpooled.EMPTY_BUFFER, false));
         assertEquals(code, res.status());
@@ -309,22 +371,73 @@ class BaseResponseTest {
     }
 
     @Test
-    void testSendFileCheck() throws IOException {
+    void testSendFileCheck() {
         final Res res = new Res();
         assertThrows(NullPointerException.class, () -> res.sendFile(null));
         final File absent = new File("");
         assertThrows(IllegalArgumentException.class, () -> res.sendFile(absent, -1L));
         assertThrows(IllegalArgumentException.class, () -> res.sendFile(absent, 0L, -1L));
         assertThrows(FileNotFoundException.class, () -> res.sendFile(absent, 0L, 1L));
+    }
 
+    @Test
+    void testSendFileAfterWriting() throws IOException {
+        final Res res = new Res();
         final File file = File.createTempFile("httpserver-", ".tmp");
         file.deleteOnExit();
-        assertTrue(res.ensureCommittedExclusively());
+        assertTrue(res.write(new byte[1]).isSuccess());
         try {
             assertThrows(IllegalStateException.class, () -> res.sendFile(file, 0L, 1L));
         } finally {
             file.delete();
         }
+
+        assertTrue(res.isCommitted());
+        assertFalse(res.isEnded());
+    }
+
+    @Test
+    void testSendFileAfterEnding() throws IOException {
+        final Res res = new Res();
+        final File file = File.createTempFile("httpserver-", ".tmp");
+        file.deleteOnExit();
+        assertTrue(res.end(new byte[1]).isSuccess());
+        try {
+            assertThrows(IllegalStateException.class, () -> res.sendFile(file, 0L, 1L));
+        } finally {
+            file.delete();
+        }
+
+        assertTrue(res.isCommitted());
+        assertTrue(res.isEnded());
+    }
+
+    @Test
+    void testSendFileWhenWriting() throws IOException {
+        final File file = File.createTempFile("httpserver-", ".tmp");
+        file.deleteOnExit();
+        final DelayedRes res = new DelayedRes();
+
+        res.block();
+        final Thread t = new Thread(() -> {
+            res.write(new byte[2]);
+        }, "base-response-test");
+        t.start();
+
+        // wait for writing
+        while (res.writePromise.isEmpty()) {
+        }
+
+        res.unblock();
+
+        try {
+            assertThrows(IllegalStateException.class, () -> res.sendFile(file, 0L, 1L));
+        } finally {
+            file.delete();
+        }
+
+        assertTrue(res.isCommitted());
+        assertFalse(res.isEnded());
     }
 
     @Test
@@ -334,6 +447,16 @@ class BaseResponseTest {
 
         assertTrue(res.headers().contains(HttpHeaderNames.LOCATION, "foo"));
         assertEquals(HttpResponseStatus.FOUND.code(), res.status());
+    }
+
+    @Test
+    void testToString() {
+        final Res res = new Res();
+        assertEquals("Response-[GET /foo 200]", res.toString());
+        res.write(new byte[2]);
+        assertEquals("Response~[GET /foo 200]", res.toString());
+        res.end();
+        assertEquals("Response![GET /foo 200]", res.toString());
     }
 
     private static class Res extends BaseResponse<BaseRequestHandleTest.Req> {
@@ -394,5 +517,40 @@ class BaseResponseTest {
             return ctx().newSucceededFuture();
         }
     }
+
+    private static final class DelayedRes extends Res {
+
+        private volatile boolean block;
+        private final List<CompletableFuture<Void>> writePromise = new CopyOnWriteArrayList<>();
+
+        @Override
+        Future<Void> doWrite(ByteBuf data, boolean writeHead) {
+            doBlock();
+            return super.doWrite(data, writeHead);
+        }
+
+        @Override
+        Future<Void> doWrite(byte[] data, int offset, int length, boolean writeHead) {
+            doBlock();
+            return super.doWrite(data, offset, length, writeHead);
+        }
+
+        private void doBlock() {
+            if (block) {
+                CompletableFuture<Void> cf = new CompletableFuture<>();
+                writePromise.add(cf);
+                cf.join();
+            }
+        }
+
+        void block() {
+            block = true;
+        }
+
+        void unblock() {
+            block = false;
+        }
+    }
+
 
 }
