@@ -51,7 +51,8 @@ public class HttpServerImpl implements HttpServer {
 
     private final ServerRuntime runtime;
     private Consumer<RequestHandle> handler;
-    private Consumer<ChannelHandlerContext> onConnected;
+    private Consumer<Channel> onConnectionInit;
+    private Consumer<Channel> onConnected;
     private Consumer<Channel> onDisconnected;
     private final CloseFuture closeFuture = new CloseFuture();
     private final CopyOnWriteArrayList<Runnable> closures = new CopyOnWriteArrayList<>();
@@ -78,7 +79,14 @@ public class HttpServerImpl implements HttpServer {
     }
 
     @Override
-    public synchronized HttpServerImpl onConnected(Consumer<ChannelHandlerContext> h) {
+    public HttpServer onConnectionInit(Consumer<Channel> h) {
+        checkStarted();
+        this.onConnectionInit = h;
+        return this;
+    }
+
+    @Override
+    public synchronized HttpServerImpl onConnected(Consumer<Channel> h) {
         checkStarted();
         this.onConnected = h;
         return this;
@@ -140,7 +148,7 @@ public class HttpServerImpl implements HttpServer {
     private synchronized HttpServerImpl listen0(SocketAddress address) {
         checkStarted();
         Checks.checkNotNull(address, "address");
-        Checks.checkNotNull(handler, "Request handler required");
+        Checks.checkNotNull(handler, "Request handler required. Set it by HttpServer.handle(xxx)");
         final ServerBootstrap bootstrap = new ServerBootstrap();
 
         final Transport transport = Transports.transport(options().isPreferNativeTransport());
@@ -153,6 +161,7 @@ public class HttpServerImpl implements HttpServer {
         bootstrap.childHandler(new HttpServerChannelInitializr(runtime,
                 sslHelper,
                 handler,
+                onConnectionInit,
                 onConnected,
                 onDisconnected));
         final EventLoopGroup bossGroup = transport.loop(options().getBossThreads(),

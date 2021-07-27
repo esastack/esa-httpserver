@@ -51,11 +51,13 @@ class HttpServerImplTest {
 
 
         final AtomicBoolean onClose = new AtomicBoolean();
+        final AtomicBoolean onConnectionInit = new AtomicBoolean();
         final AtomicBoolean onConnected = new AtomicBoolean();
         final AtomicBoolean onDisconnected = new AtomicBoolean();
         final AtomicBoolean onHandle = new AtomicBoolean();
         final CompletableFuture<Boolean> closed = new CompletableFuture<>();
         assertDoesNotThrow(() -> server.onClose(() -> onClose.set(true)));
+        assertDoesNotThrow(() -> server.onConnectionInit(ctx -> onConnectionInit.set(true)));
         assertDoesNotThrow(() -> server.onConnected(ctx -> onConnected.set(true)));
         assertDoesNotThrow(() -> server.onDisconnected(ctx -> onDisconnected.set(true)));
         assertDoesNotThrow(() -> server.handle(ctx -> onHandle.set(true)));
@@ -100,10 +102,12 @@ class HttpServerImplTest {
             assertNotNull(server.bossGroup());
             assertNotNull(server.ioGroup());
 
+            assertThrows(IllegalStateException.class, () -> server.onConnectionInit(ctx -> onConnected.set(true)));
             assertThrows(IllegalStateException.class, () -> server.onConnected(ctx -> onConnected.set(true)));
             assertThrows(IllegalStateException.class, () -> server.onDisconnected(ctx -> onDisconnected.set(true)));
             assertThrows(IllegalStateException.class, () -> server.handle(ctx -> onHandle.set(true)));
 
+            assertFalse(onConnectionInit.get());
             assertFalse(onConnected.get());
             assertFalse(onDisconnected.get());
             assertFalse(onHandle.get());

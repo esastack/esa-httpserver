@@ -53,17 +53,20 @@ final class HttpServerChannelInitializr extends ChannelInitializer<Channel> {
     private final ServerRuntime runtime;
     private final SslHelper sslHelper;
     private final Consumer<RequestHandle> handler;
-    private final Consumer<ChannelHandlerContext> onConnected;
+    private final Consumer<Channel> onConnectionInit;
+    private final Consumer<Channel> onConnected;
     private final Consumer<Channel> onDisconnected;
 
     HttpServerChannelInitializr(ServerRuntime runtime,
                                 SslHelper sslHelper,
                                 Consumer<RequestHandle> handler,
-                                Consumer<ChannelHandlerContext> onConnected,
+                                Consumer<Channel> onConnectionInit,
+                                Consumer<Channel> onConnected,
                                 Consumer<Channel> onDisconnected) {
         this.runtime = runtime;
         this.sslHelper = sslHelper;
         this.handler = handler;
+        this.onConnectionInit = onConnectionInit;
         this.onConnected = onConnected;
         this.onDisconnected = onDisconnected;
     }
@@ -74,6 +77,14 @@ final class HttpServerChannelInitializr extends ChannelInitializer<Channel> {
         if (!runtime.isRunning()) {
             ch.close();
             return;
+        }
+
+        if (onConnectionInit != null) {
+            try {
+                onConnectionInit.accept(ch);
+            } catch (Throwable t) {
+                Loggers.logger().warn("Error while processing onConnectionInit()", t);
+            }
         }
 
         final ChannelPipeline pipeline = ch.pipeline();
@@ -91,7 +102,7 @@ final class HttpServerChannelInitializr extends ChannelInitializer<Channel> {
                 }
                 if (onConnected != null) {
                     try {
-                        onConnected.accept(ctx);
+                        onConnected.accept(ch);
                     } catch (Throwable t) {
                         Loggers.logger().warn("Error while processing onConnected()", t);
                     }
