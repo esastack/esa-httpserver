@@ -19,7 +19,6 @@ import io.esastack.httpserver.core.RequestHandle;
 import io.esastack.httpserver.impl.HttpServerImpl;
 import io.esastack.httpserver.metrics.Metrics;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoopGroup;
 import io.netty.util.concurrent.Future;
 
@@ -79,13 +78,22 @@ public interface HttpServer {
     HttpServer handle(Consumer<RequestHandle> h);
 
     /**
+     * Sets the handler for listening connection init.
+     *
+     * @param h handler
+     *
+     * @return this
+     */
+    HttpServer onConnectionInit(Consumer<Channel> h);
+
+    /**
      * Sets the handler for listening connection connected.
      *
      * @param h handler
      *
      * @return this
      */
-    HttpServer onConnected(Consumer<ChannelHandlerContext> h);
+    HttpServer onConnected(Consumer<Channel> h);
 
     /**
      * Sets the handler for listening connection disconnected.

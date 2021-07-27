@@ -67,6 +67,7 @@ class HttpServerChannelInitializrTest {
                         new SslHelper(null, false),
                         r -> r.response().end(),
                         null,
+                        null,
                         null);
         final EmbeddedChannel channel = new EmbeddedChannel(initializr);
         assertFalse(channel.isActive());
@@ -80,6 +81,7 @@ class HttpServerChannelInitializrTest {
                         .configured()),
                         new SslHelper(null, false),
                         r -> r.response().end(),
+                        null,
                         null,
                         null);
         final EmbeddedChannel channel = new EmbeddedChannel(initializr);
@@ -96,6 +98,7 @@ class HttpServerChannelInitializrTest {
                         new SslHelper(null, false),
                         r -> r.response().end(),
                         null,
+                        null,
                         null);
         final EmbeddedChannel channel = new EmbeddedChannel(initializr);
         assertEquals(WriteBufferWaterMark.DEFAULT.low() - 1,
@@ -111,6 +114,7 @@ class HttpServerChannelInitializrTest {
                         .configured()),
                         new SslHelper(null, false),
                         r -> r.response().end(),
+                        null,
                         null,
                         null);
         final EmbeddedChannel channel = new EmbeddedChannel(initializr);
@@ -129,6 +133,7 @@ class HttpServerChannelInitializrTest {
                         new SslHelper(null, false),
                         r -> r.response().end(),
                         null,
+                        null,
                         null);
         final EmbeddedChannel channel = new EmbeddedChannel(initializr);
         assertNotNull(channel.pipeline().get(HAProxyDetector.class));
@@ -143,6 +148,7 @@ class HttpServerChannelInitializrTest {
                         .configured()),
                         new SslHelper(null, false),
                         r -> r.response().end(),
+                        null,
                         null,
                         null);
         final EmbeddedChannel channel = new EmbeddedChannel(initializr);
@@ -162,6 +168,7 @@ class HttpServerChannelInitializrTest {
                         new SslHelper(null, false),
                         r -> r.response().end(),
                         null,
+                        null,
                         null);
         final EmbeddedChannel channel = new EmbeddedChannel(initializr);
         assertNull(channel.pipeline().get(HAProxyMessageDecoder.class));
@@ -169,7 +176,8 @@ class HttpServerChannelInitializrTest {
     }
 
     @Test
-    void testChannelActiveAndInactiveListener() {
+    void testChannelInitAndActiveAndInactiveListener() {
+        final AtomicBoolean init = new AtomicBoolean();
         final AtomicBoolean active = new AtomicBoolean();
         final AtomicBoolean inActive = new AtomicBoolean();
         final ServerRuntime runtime = Helper.serverRuntime(ServerOptionsConfigure.newOpts()
@@ -179,11 +187,13 @@ class HttpServerChannelInitializrTest {
                 new HttpServerChannelInitializr(runtime,
                         new SslHelper(null, false),
                         r -> r.response().end(),
-                        ctx -> active.set(true),
+                        c -> init.set(true),
+                        c -> active.set(true),
                         c -> inActive.set(true));
 
         final EmbeddedChannel channel = new EmbeddedChannel(initializr);
 
+        assertTrue(init.get());
         assertTrue(active.get());
         assertFalse(inActive.get());
 
@@ -203,6 +213,7 @@ class HttpServerChannelInitializrTest {
 
     @Test
     void testErrorOccurredInConnectionHandlerShouldBeIgnored() {
+        final AtomicBoolean init = new AtomicBoolean();
         final AtomicBoolean active = new AtomicBoolean();
         final AtomicBoolean inActive = new AtomicBoolean();
         final ServerRuntime runtime = Helper.serverRuntime(ServerOptionsConfigure.newOpts()
@@ -212,7 +223,11 @@ class HttpServerChannelInitializrTest {
                 new HttpServerChannelInitializr(runtime,
                         new SslHelper(null, false),
                         r -> r.response().end(),
-                        ctx -> {
+                        c -> {
+                            init.set(true);
+                            ExceptionUtils.throwException(new IllegalStateException());
+                        },
+                        c -> {
                             active.set(true);
                             ExceptionUtils.throwException(new IllegalStateException());
                         },
@@ -223,6 +238,7 @@ class HttpServerChannelInitializrTest {
 
         final EmbeddedChannel channel = new EmbeddedChannel(initializr);
 
+        assertTrue(init.get());
         assertTrue(active.get());
         assertFalse(inActive.get());
         channel.close();
@@ -426,6 +442,7 @@ class HttpServerChannelInitializrTest {
                         new SslHelper(null, false),
                         r -> r.response().end(),
                         null,
+                        null,
                         null);
 
         final EmbeddedChannel channel = new EmbeddedChannel(initializr);
@@ -502,6 +519,7 @@ class HttpServerChannelInitializrTest {
                             });
                         },
                         null,
+                        null,
                         null);
 
         final EmbeddedChannel channel = new EmbeddedChannel(initializr);
@@ -573,6 +591,7 @@ class HttpServerChannelInitializrTest {
                         new SslHelper(null, false),
                         r -> r.response().end(),
                         null,
+                        null,
                         null);
 
         final EmbeddedChannel channel = new EmbeddedChannel(initializr);
@@ -637,6 +656,7 @@ class HttpServerChannelInitializrTest {
                         new SslHelper(null, false),
                         r -> r.response().end(),
                         null,
+                        null,
                         null);
 
         final EmbeddedChannel channel = new EmbeddedChannel(initializr);
@@ -680,6 +700,7 @@ class HttpServerChannelInitializrTest {
                 new HttpServerChannelInitializr(runtime,
                         new SslHelper(runtime.options().getSsl(), false),
                         r -> r.response().end(),
+                        null,
                         null,
                         null);
 
@@ -736,6 +757,7 @@ class HttpServerChannelInitializrTest {
                 new HttpServerChannelInitializr(runtime,
                         new SslHelper(runtime.options().getSsl(), false),
                         r -> r.response().end(),
+                        null,
                         null,
                         null);
 
@@ -805,6 +827,7 @@ class HttpServerChannelInitializrTest {
                         new SslHelper(null, false),
                         r -> r.response().end(),
                         null,
+                        null,
                         null);
 
         final EmbeddedChannel channel = new EmbeddedChannel(initializr);
@@ -868,6 +891,7 @@ class HttpServerChannelInitializrTest {
                 new HttpServerChannelInitializr(runtime,
                         new SslHelper(null, false),
                         r -> r.response().end(),
+                        null,
                         null,
                         null);
 
