@@ -15,7 +15,7 @@
  */
 package io.esastack.httpserver.impl;
 
-import esa.commons.netty.http.Http1HeadersImpl;
+import io.esastack.commons.net.netty.http.Http1HeadersImpl;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.http.DefaultHttpRequest;
@@ -45,9 +45,9 @@ class Http1RequestHandleImplTest {
                         request,
                         true);
 
-        assertEquals(esa.commons.http.HttpVersion.HTTP_1_1, handle.version());
+        assertEquals(io.esastack.commons.net.http.HttpVersion.HTTP_1_1, handle.version());
 
-        assertSame(esa.commons.http.HttpMethod.POST, handle.method());
+        assertSame(io.esastack.commons.net.http.HttpMethod.POST, handle.method());
         assertSame(request.headers(), handle.headers());
 
         assertNotNull(handle.response());

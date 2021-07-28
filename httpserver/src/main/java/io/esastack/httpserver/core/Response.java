@@ -17,8 +17,8 @@ package io.esastack.httpserver.core;
 
 import esa.commons.Checks;
 import esa.commons.annotation.Beta;
-import esa.commons.http.Cookie;
-import esa.commons.http.HttpHeaders;
+import io.esastack.commons.net.http.Cookie;
+import io.esastack.commons.net.http.HttpHeaders;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;

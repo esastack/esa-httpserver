@@ -15,7 +15,7 @@
  */
 package io.esastack.httpserver.impl;
 
-import esa.commons.http.HttpHeaders;
+import io.esastack.commons.net.http.HttpHeaders;
 import io.esastack.httpserver.core.RequestHandle;
 import io.esastack.httpserver.utils.Constants;
 import io.esastack.httpserver.utils.Loggers;

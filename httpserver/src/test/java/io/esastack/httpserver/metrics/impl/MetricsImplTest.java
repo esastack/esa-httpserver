@@ -15,7 +15,7 @@
  */
 package io.esastack.httpserver.metrics.impl;
 
-import esa.commons.http.HttpVersion;
+import io.esastack.commons.net.http.HttpVersion;
 import io.esastack.httpserver.core.BaseRequest;
 import io.esastack.httpserver.utils.Constants;
 import io.netty.channel.Channel;
@@ -26,7 +26,11 @@ import io.netty.handler.ssl.OpenSslSessionStats;
 import io.netty.handler.ssl.SslContext;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

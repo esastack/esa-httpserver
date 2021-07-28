@@ -16,10 +16,10 @@
 package io.esastack.httpserver.impl;
 
 import esa.commons.Checks;
-import esa.commons.http.HttpHeaders;
-import esa.commons.http.HttpMethod;
-import esa.commons.http.HttpVersion;
-import esa.commons.netty.http.Http1HeadersImpl;
+import io.esastack.commons.net.http.HttpHeaders;
+import io.esastack.commons.net.http.HttpMethod;
+import io.esastack.commons.net.http.HttpVersion;
+import io.esastack.commons.net.netty.http.Http1HeadersImpl;
 import io.esastack.httpserver.core.RequestHandle;
 import io.esastack.httpserver.utils.Constants;
 import io.netty.channel.ChannelHandlerContext;

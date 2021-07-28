@@ -15,9 +15,9 @@
  */
 package io.esastack.httpserver.impl;
 
-import esa.commons.http.HttpHeaders;
-import esa.commons.http.HttpMethod;
-import esa.commons.http.HttpVersion;
+import io.esastack.commons.net.http.HttpHeaders;
+import io.esastack.commons.net.http.HttpMethod;
+import io.esastack.commons.net.http.HttpVersion;
 import io.esastack.httpserver.core.RequestHandle;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;

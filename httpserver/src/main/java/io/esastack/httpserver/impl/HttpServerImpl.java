@@ -29,7 +29,6 @@ import io.esastack.httpserver.utils.LoggedThreadFactory;
 import io.esastack.httpserver.utils.Loggers;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
 import io.netty.util.concurrent.DefaultPromise;

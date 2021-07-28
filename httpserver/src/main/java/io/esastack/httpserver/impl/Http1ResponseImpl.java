@@ -16,8 +16,8 @@
 package io.esastack.httpserver.impl;
 
 import esa.commons.ExceptionUtils;
-import esa.commons.http.HttpMethod;
-import esa.commons.netty.http.Http1HeadersImpl;
+import io.esastack.commons.net.http.HttpMethod;
+import io.esastack.commons.net.netty.http.Http1HeadersImpl;
 import io.esastack.httpserver.core.Response;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

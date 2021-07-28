@@ -16,10 +16,10 @@
 package io.esastack.httpserver.impl;
 
 import esa.commons.StringUtils;
-import esa.commons.http.Cookie;
-import esa.commons.http.HttpHeaders;
-import esa.commons.http.HttpMethod;
-import esa.commons.netty.http.CookieImpl;
+import io.esastack.commons.net.http.Cookie;
+import io.esastack.commons.net.http.HttpHeaders;
+import io.esastack.commons.net.http.HttpMethod;
+import io.esastack.commons.net.netty.http.CookieImpl;
 import io.esastack.httpserver.core.Aggregation;
 import io.esastack.httpserver.core.MultiPart;
 import io.esastack.httpserver.core.RequestHandle;

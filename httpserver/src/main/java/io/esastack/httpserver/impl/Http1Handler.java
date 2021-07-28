@@ -15,9 +15,9 @@
  */
 package io.esastack.httpserver.impl;
 
-import esa.commons.http.HttpHeaders;
-import esa.commons.netty.http.EmptyHttpHeaders;
-import esa.commons.netty.http.Http1HeadersAdaptor;
+import io.esastack.commons.net.http.EmptyHttpHeaders;
+import io.esastack.commons.net.http.HttpHeaders;
+import io.esastack.commons.net.netty.http.Http1HeadersAdaptor;
 import io.esastack.httpserver.core.RequestHandle;
 import io.esastack.httpserver.utils.Loggers;
 import io.netty.buffer.ByteBuf;
@@ -28,7 +28,17 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.DecoderResult;
 import io.netty.handler.codec.TooLongFrameException;
-import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpMessage;
+import io.netty.handler.codec.http.HttpObject;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.LastHttpContent;
 
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
