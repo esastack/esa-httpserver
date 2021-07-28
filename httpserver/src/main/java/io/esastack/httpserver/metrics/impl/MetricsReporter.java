@@ -15,7 +15,7 @@
  */
 package io.esastack.httpserver.metrics.impl;
 
-import esa.commons.http.HttpVersion;
+import io.esastack.commons.net.http.HttpVersion;
 import io.esastack.httpserver.core.BaseRequest;
 import io.esastack.httpserver.metrics.Metrics;
 import io.netty.channel.Channel;

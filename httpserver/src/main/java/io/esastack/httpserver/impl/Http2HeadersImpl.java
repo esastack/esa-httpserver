@@ -15,7 +15,7 @@
  */
 package io.esastack.httpserver.impl;
 
-import esa.commons.netty.http.Http2HeadersAdaptor;
+import io.esastack.commons.net.netty.http.Http2HeadersAdaptor;
 import io.netty.handler.codec.http2.Http2Headers;
 
 final class Http2HeadersImpl extends Http2HeadersAdaptor {

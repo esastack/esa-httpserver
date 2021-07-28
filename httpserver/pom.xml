@@ -31,11 +31,11 @@
         </dependency>
         <dependency>
             <groupId>io.esastack</groupId>
-            <artifactId>commons-http</artifactId>
+            <artifactId>commons-net-core</artifactId>
         </dependency>
         <dependency>
             <groupId>io.esastack</groupId>
-            <artifactId>commons-netty-http</artifactId>
+            <artifactId>commons-net-netty</artifactId>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>

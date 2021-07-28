@@ -15,10 +15,10 @@
  */
 package io.esastack.httpserver.core;
 
-import esa.commons.http.Cookie;
-import esa.commons.http.HttpHeaders;
-import esa.commons.http.HttpMethod;
-import esa.commons.http.HttpVersion;
+import io.esastack.commons.net.http.Cookie;
+import io.esastack.commons.net.http.HttpHeaders;
+import io.esastack.commons.net.http.HttpMethod;
+import io.esastack.commons.net.http.HttpVersion;
 
 import java.net.SocketAddress;
 import java.util.List;

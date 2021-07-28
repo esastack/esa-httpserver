@@ -15,7 +15,7 @@
  */
 package io.esastack.httpserver.core;
 
-import esa.commons.http.HttpHeaders;
+import io.esastack.commons.net.http.HttpHeaders;
 import io.netty.buffer.ByteBuf;
 
 /**

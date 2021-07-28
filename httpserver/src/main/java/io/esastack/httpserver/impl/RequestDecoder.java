@@ -15,7 +15,7 @@
  */
 package io.esastack.httpserver.impl;
 
-import esa.commons.netty.http.Http1HeadersImpl;
+import io.esastack.commons.net.netty.http.Http1HeadersImpl;
 import io.esastack.httpserver.utils.Constants;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpMessage;

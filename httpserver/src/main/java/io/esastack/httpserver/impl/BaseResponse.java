@@ -18,9 +18,9 @@ package io.esastack.httpserver.impl;
 import esa.commons.Checks;
 import esa.commons.ExceptionUtils;
 import esa.commons.StringUtils;
-import esa.commons.http.Cookie;
 import esa.commons.http.MimeMappings;
-import esa.commons.netty.http.CookieImpl;
+import io.esastack.commons.net.http.Cookie;
+import io.esastack.commons.net.http.CookieUtil;
 import io.esastack.httpserver.core.Response;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -97,7 +97,7 @@ abstract class BaseResponse<REQ extends BaseRequestHandle> implements Response {
 
     @Override
     public Response addCookie(String name, String value) {
-        return addCookie(new CookieImpl(name, value));
+        return addCookie(CookieUtil.cookie(name, value));
     }
 
     @Override
