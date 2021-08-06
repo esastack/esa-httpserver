@@ -45,7 +45,8 @@ HttpServer.create()
                 return p.setSuccess(null);
             });
         })
-        .listen(8080);
+        .listen(8080)
+        .awaitUninterruptibly();
 ```
 
 ## Performance
