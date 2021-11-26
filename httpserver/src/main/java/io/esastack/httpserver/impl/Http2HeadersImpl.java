@@ -27,8 +27,4 @@ final class Http2HeadersImpl extends Http2HeadersAdaptor {
     Http2HeadersImpl(Http2Headers headers) {
         super(headers);
     }
-
-    Http2Headers unwrap() {
-        return underlying;
-    }
 }

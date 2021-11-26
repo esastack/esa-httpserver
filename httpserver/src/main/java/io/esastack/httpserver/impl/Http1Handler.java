@@ -31,6 +31,7 @@ import io.netty.handler.codec.TooLongFrameException;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpExpectationFailedEvent;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpMessage;
 import io.netty.handler.codec.http.HttpObject;
@@ -409,6 +410,10 @@ final class Http1Handler extends SimpleChannelInboundHandler<HttpObject> {
                 ctx.channel().close();
             }
         });
+        // fix https://github.com/esastack/esa-httpserver/issues/22
+        // we must trigger this event to make sure HttpObjectDecoder#reset() is invoked.
+        // see more details from HttpObjectDecoder#userEventTriggered()
+        ctx.pipeline().fireUserEventTriggered(HttpExpectationFailedEvent.INSTANCE);
     }
 
     private void write417(ChannelHandlerContext ctx, boolean keepalive) {
@@ -421,6 +426,10 @@ final class Http1Handler extends SimpleChannelInboundHandler<HttpObject> {
                 ctx.channel().close();
             }
         });
+        // fix https://github.com/esastack/esa-httpserver/issues/22
+        // we must trigger this event to make sure HttpObjectDecoder#reset() is invoked.
+        // see more details from HttpObjectDecoder#userEventTriggered()
+        ctx.pipeline().fireUserEventTriggered(HttpExpectationFailedEvent.INSTANCE);
     }
 
     private void write400(ChannelHandlerContext ctx, DecoderResult msg) {

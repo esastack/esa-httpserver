@@ -420,6 +420,8 @@ final class Http2Handler extends Http2EventAdapter {
                         stream.close();
                     } else if (isShutdown() && ctx.channel().isActive()) {
                         ctx.channel().close();
+                    } else {
+                        stream.close();
                     }
                 });
     }
@@ -445,6 +447,8 @@ final class Http2Handler extends Http2EventAdapter {
                         stream.close();
                     } else if (isShutdown() && ctx.channel().isActive()) {
                         ctx.channel().close();
+                    } else {
+                        stream.close();
                     }
                 });
     }
