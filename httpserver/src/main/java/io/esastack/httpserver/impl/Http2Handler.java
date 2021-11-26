@@ -422,6 +422,9 @@ final class Http2Handler extends Http2EventAdapter {
                         ctx.channel().close();
                     }
                 });
+        // release all resources corresponding current stream
+        stream.close();
+        removeRequest(stream);
     }
 
     private void write417(ChannelHandlerContext ctx,
@@ -447,5 +450,8 @@ final class Http2Handler extends Http2EventAdapter {
                         ctx.channel().close();
                     }
                 });
+        // release all resources corresponding current stream
+        stream.close();
+        removeRequest(stream);
     }
 }
