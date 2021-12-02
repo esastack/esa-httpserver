@@ -20,7 +20,6 @@ import esa.commons.ExceptionUtils;
 import esa.commons.StringUtils;
 import esa.commons.http.MimeMappings;
 import io.esastack.commons.net.http.Cookie;
-import io.esastack.commons.net.http.CookieUtil;
 import io.esastack.httpserver.core.Response;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -97,7 +96,7 @@ abstract class BaseResponse<REQ extends BaseRequestHandle> implements Response {
 
     @Override
     public Response addCookie(String name, String value) {
-        return addCookie(CookieUtil.cookie(name, value));
+        return addCookie(Cookie.cookie(name, value));
     }
 
     @Override
