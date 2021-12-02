@@ -15,7 +15,7 @@
  */
 package io.esastack.httpserver.impl;
 
-import io.esastack.commons.net.http.CookieUtil;
+import io.esastack.commons.net.http.Cookie;
 import io.esastack.commons.net.http.HttpHeaders;
 import io.esastack.commons.net.netty.http.Http1HeadersImpl;
 import io.netty.buffer.ByteBuf;
@@ -57,7 +57,7 @@ class BaseResponseTest {
         assertEquals(201, res.status());
         assertTrue(res.isKeepAlive());
         res.addCookie("a", "1");
-        res.addCookie(CookieUtil.cookie("b", "2"));
+        res.addCookie(Cookie.cookie("b", "2"));
         assertEquals(2, res.headers().getAll(SET_COOKIE).size());
         assertEquals("a=1", res.headers().getAll(SET_COOKIE).get(0));
         assertEquals("b=2", res.headers().getAll(SET_COOKIE).get(1));

@@ -17,9 +17,9 @@ package io.esastack.httpserver.impl;
 
 import esa.commons.StringUtils;
 import io.esastack.commons.net.http.Cookie;
+import io.esastack.commons.net.http.CookieUtil;
 import io.esastack.commons.net.http.HttpHeaders;
 import io.esastack.commons.net.http.HttpMethod;
-import io.esastack.commons.net.netty.http.CookieImpl;
 import io.esastack.httpserver.core.Aggregation;
 import io.esastack.httpserver.core.MultiPart;
 import io.esastack.httpserver.core.RequestHandle;
@@ -118,7 +118,7 @@ abstract class BaseRequestHandle implements RequestHandle {
                 Map<String, Cookie> map = new HashMap<>(decoded.size());
 
                 for (io.netty.handler.codec.http.cookie.Cookie c : decoded) {
-                    map.put(c.name(), new CookieImpl(c));
+                    map.put(c.name(), CookieUtil.wrap(c));
                 }
                 cookies = map;
             }
