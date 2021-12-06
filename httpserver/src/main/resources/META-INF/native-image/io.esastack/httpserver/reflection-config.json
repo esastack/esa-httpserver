@@ -1,0 +1,21 @@
+[
+  {
+    "name":"io.esastack.httpserver.impl.Http1Handler",
+    "methods":[
+      {"name":"channelInactive","parameterTypes":["io.netty.channel.ChannelHandlerContext"] },
+      {"name":"channelReadComplete","parameterTypes":["io.netty.channel.ChannelHandlerContext"] },
+      {"name":"exceptionCaught","parameterTypes":["io.netty.channel.ChannelHandlerContext","java.lang.Throwable"] },
+      {"name":"userEventTriggered","parameterTypes":["io.netty.channel.ChannelHandlerContext","java.lang.Object"] }
+    ]
+  },
+  {
+    "name":"io.esastack.httpserver.impl.HttpServerChannelInitializr"
+  },
+  {
+    "name":"io.esastack.httpserver.impl.OnChannelActiveHandler",
+    "methods":[{"name":"channelActive","parameterTypes":["io.netty.channel.ChannelHandlerContext"] }]
+  },
+  {
+    "name":"io.esastack.httpserver.impl.RequestDecoder"
+  }
+]
