@@ -116,8 +116,8 @@
         <project.build.sourceEncoding>${encoding}</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${encoding}</project.reporting.outputEncoding>
         <excludes-tests>**/it/**Test.java</excludes-tests>
-        <esa-commons.version>0.1.2-SNAPSHOT</esa-commons.version>
-        <esa-commons-net.version>0.0.1-SNAPSHOT</esa-commons-net.version>
+        <esa-commons.version>0.2.1</esa-commons.version>
+        <esa-commons-net.version>0.0.1</esa-commons-net.version>
         <esa-commons-build.version>1.0</esa-commons-build.version>
         <netty.version>4.1.52.Final</netty.version>
         <netty-tcnative.version>2.0.34.Final</netty-tcnative.version>
